@@ -1,6 +1,7 @@
 package com.example.steve.tessuitmediaandroid;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.nfc.Tag;
 import android.os.AsyncTask;
@@ -35,16 +36,13 @@ import java.util.Objects;
 public class GuestActivity extends Activity {
     private GridView listGuest;
     private ArrayList<dataStructureGuest> namaBirthdateGuest;
-    private List<dataStructureGuest> tempRequestResult;
+    private Context context;
     private int positionSelected;
     private rowGuestList adapter;
 
     private class requestListGuest extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... endpoint_url) {
-            // String response doInBackground
-            String response = null;
-
             // Buat objek http dan url
             URL endpoint = null;
             try {
@@ -70,9 +68,14 @@ public class GuestActivity extends Activity {
             }
 
             // Ubah stream buffer dari response ke string
+            // String response doInBackground
+            String response = "";
+            String inputLineReader;
             try {
                 assert reader != null;
-                response = reader.readLine();
+                while ((inputLineReader = reader.readLine()) != null) {
+                    response += inputLineReader;
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -85,67 +88,10 @@ public class GuestActivity extends Activity {
             }
 
             return response;
-
-            /*// Create HttpClient
-            HttpClient httpclient = new DefaultHttpClient();
-
-            // make GET request to the given URL
-            HttpResponse httpResponse = null;
-            try {
-                httpResponse = httpclient.execute(new HttpGet(endpoint_url[0]));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            // Receive response as inputStream
-            InputStream inputStream;
-            StringBuilder response = null;
-            try {
-                assert httpResponse != null;
-                HttpEntity entity = httpResponse.getEntity();
-                if (entity != null) {
-                    inputStream = entity.getContent();
-                    // Convert InputStream to string response http
-                    BufferedReader bufferedReader = null;
-                    if (inputStream != null) {
-                        bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-                    }
-                    String line;
-                    response = new StringBuilder();
-                    try {
-                        assert bufferedReader != null;
-                        while ((line = bufferedReader.readLine()) != null) {
-                            response.append(line);
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    // Tutup koneksi stream input
-                    try {
-                        inputStream.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                } else {
-                    Log.w("Entity", "Entity kosong");
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-
-            if (response != null) {
-                Log.d("response", response.toString());
-                System.out.println(response.toString());
-            }
-
-            assert response != null;
-            return response.toString();*/
         }
 
         private void getListGuestJSON (String response) {
             // Parse string response dalam format json, masukkan ke list vector listGuest
-
             JSONArray guest = null;
             try {
                 guest = new JSONArray(response);
@@ -161,20 +107,20 @@ public class GuestActivity extends Activity {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                String nama = null;
+                String nama = "";
                 try {
                     assert itemGuest != null;
                     nama = itemGuest.getString("name");
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                String birthday = null;
+                String birthday = "";
                 try {
                     birthday = itemGuest.getString("birthdate");
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                namaBirthdateGuest.add(i, new dataStructureGuest(nama, birthday));
+                namaBirthdateGuest.add(new dataStructureGuest(nama, birthday));
                 //tempRequestResult.add(i, new dataStructureGuest(nama, birthday));
                 //adapter.add(new dataStructureGuest(nama, birthday));
             }
@@ -182,16 +128,30 @@ public class GuestActivity extends Activity {
 
         @Override
         protected void onPostExecute(String result) {
-            Toast.makeText(getBaseContext(), result, Toast.LENGTH_LONG).show();
+            //Toast.makeText(getBaseContext(), result, Toast.LENGTH_LONG).show();
             getListGuestJSON(result);
-           /* // Tambahkan data guest hasil dari request ke adapter
-            Log.d("result", tempRequestResult.get(1).getNama());
-            Toast.makeText(getBaseContext(), tempRequestResult.get(1).getNama(), Toast.LENGTH_LONG).show();
-            for (int i=0; i<tempRequestResult.size(); i++) {
-                String nama = tempRequestResult.get(i).getNama();
-                String birthdate = tempRequestResult.get(i).getBirthday();
-                adapter.add(new dataStructureGuest(nama,birthdate));
-            }*/
+
+            // Bind list nameBirthdayGuest ke listview list of guest beserta setting click listener
+            adapter = new rowGuestList(context, namaBirthdateGuest);
+            listGuest.setAdapter(adapter);
+
+            //adapter.add(new dataStructureGuest("Joko", "2014-02-01"));
+
+            listGuest.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    positionSelected = position;
+                    finish();
+                }
+            });
+
+            listGuest.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    positionSelected = position;
+                    finish();
+                }
+            });
         }
     }
 
@@ -200,34 +160,12 @@ public class GuestActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_guest);
         listGuest = (GridView) findViewById(R.id.listGuest);
+        namaBirthdateGuest = new ArrayList<>();
+        context = GuestActivity.this;
 
         // Request data guest dari endpoint kemudian isi list guest
         requestListGuest requestList = new requestListGuest();
         requestList.execute("http://dry-sierra-6832.herokuapp.com/api/people");
-
-        // Bind list nameBirthdayGuest ke listview list of guest beserta setting click listener
-        namaBirthdateGuest = new ArrayList<dataStructureGuest>();
-        adapter = new rowGuestList(this, namaBirthdateGuest);
-        listGuest.setAdapter(adapter);
-
-        listGuest.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                positionSelected = position;
-                finish();
-            }
-        });
-
-        Toast.makeText(getBaseContext(), "Request guest dari url berhasil", Toast.LENGTH_LONG).show();
-
-       /* // Tambahkan data guest hasil dari request ke adapter
-        Log.d("result", tempRequestResult.get(1).getNama());
-        Toast.makeText(getBaseContext(), tempRequestResult.get(1).getNama(), Toast.LENGTH_LONG).show();
-        for (int i=0; i<tempRequestResult.size(); i++) {
-            String nama = tempRequestResult.get(i).getNama();
-            String birthdate = tempRequestResult.get(i).getBirthday();
-            adapter.add(new dataStructureGuest(nama,birthdate));
-        }*/
     }
 
     @Override
@@ -236,7 +174,7 @@ public class GuestActivity extends Activity {
         intent.putExtra("nama guest", namaBirthdateGuest.get(positionSelected).getNama());
         intent.putExtra("birthday guest", namaBirthdateGuest.get(positionSelected).getBirthday());
         setResult(RESULT_OK, intent);
-       // adapter.clear();
+        // adapter.clear();
         super.finish();
     }
 }

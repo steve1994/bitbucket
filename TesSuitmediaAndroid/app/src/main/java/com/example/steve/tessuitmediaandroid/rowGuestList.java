@@ -18,47 +18,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class rowGuestList extends BaseAdapter {
+public class rowGuestList extends ArrayAdapter<dataStructureGuest> {
     private final Context context;
     private final ArrayList<dataStructureGuest> listGuest;
 
     public rowGuestList(Context context, ArrayList<dataStructureGuest> listGuest) {
-        //super(context, R.layout.activity_row_guest_list, listGuest);
+        super(context, R.layout.activity_row_guest_list, listGuest);
         this.context = context;
         this.listGuest = listGuest;
-    }
-
-    /**
-     * How many items are in the data set represented by this Adapter.
-     *
-     * @return Count of items.
-     */
-    @Override
-    public int getCount() {
-        return 0;
-    }
-
-    /**
-     * Get the data item associated with the specified position in the data set.
-     *
-     * @param position Position of the item whose data we want within the adapter's
-     *                 data set.
-     * @return The data at the specified position.
-     */
-    @Override
-    public Object getItem(int position) {
-        return listGuest.get(position);
-    }
-
-    /**
-     * Get the row id associated with the specified position in the list.
-     *
-     * @param position The position of the item within the adapter's data set whose row id we want.
-     * @return The id of the item at the specified position.
-     */
-    @Override
-    public long getItemId(int position) {
-        return 0;
     }
 
     @Override
